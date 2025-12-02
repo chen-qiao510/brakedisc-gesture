@@ -1,0 +1,7 @@
+{
+  "name": "Brake Disc Gesture System1202",
+  "description": "A 3D interactive visualization of a train brake disc controlled by hand gestures via webcam.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
