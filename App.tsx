@@ -15,6 +15,7 @@ const App: React.FC = () => {
     cameraDistance: SCENE_CONFIG.CAMERA_DEFAULT_DIST,
     isExploded: false,
     hasReassembled: false,
+    isRedirecting: false, // 初始化为 false
   });
 
   // MediaPipe Hands 实例引用
@@ -30,14 +31,33 @@ const App: React.FC = () => {
   // 防止组件卸载后继续执行
   const isMountedRef = useRef<boolean>(true);
 
-  // --- 新增：监听跳转逻辑 ---
+  // --- 修复后的跳转逻辑 (拆分为两个 Effect) ---
+
+  // Effect 1: 监听手势，触发跳转状态 (UI 变化)
   useEffect(() => {
-    // 逻辑：如果当前是聚合状态（isExploded 为 false），且手势是 ONE（数字1）
-    if (!appState.isExploded && appState.gesture === HandGesture.ONE) {
-      // 执行跳转
-      window.location.href = "https://temp-predict-campare.vercel.app/";
+    // 逻辑：如果当前是聚合状态（isExploded 为 false），且手势是 ONE（数字1），且当前没有正在跳转
+    if (!appState.isExploded && appState.gesture === HandGesture.ONE && !appState.isRedirecting) {
+      setAppState(prev => ({ ...prev, isRedirecting: true }));
     }
-  }, [appState.gesture, appState.isExploded]);
+  }, [appState.gesture, appState.isExploded, appState.isRedirecting]);
+
+  // Effect 2: 监听跳转状态，执行实际跳转 (Side Effect)
+  // 将定时器逻辑独立出来，避免因为 setAppState 导致的组件重渲染而意外清除定时器
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    
+    if (appState.isRedirecting) {
+      console.log("Initiating redirect sequence...");
+      timer = setTimeout(() => {
+         console.log("Redirecting now.");
+         window.location.href = "https://temp-predict-campare.vercel.app/";
+      }, 2000);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [appState.isRedirecting]);
 
   // 初始化 MediaPipe
   useEffect(() => {
@@ -169,6 +189,9 @@ const App: React.FC = () => {
 
 
       setAppState(prev => {
+        // 如果正在跳转，锁定状态，不再响应手势变化
+        if (prev.isRedirecting) return prev;
+
         // 如果当前手势稳定，则使用新手势，否则维持上一次的状态
         const confirmedGesture = stableGesture !== null ? stableGesture : prev.gesture;
 
@@ -214,16 +237,20 @@ const App: React.FC = () => {
           cameraDistance: nextCameraDist, 
           isExploded: nextIsExploded,
           hasReassembled: nextHasReassembled,
+          isRedirecting: prev.isRedirecting, // Keep this state
         };
       });
 
     } else {
       // 没有检测到手
-      setAppState(prev => ({
-        ...prev,
-        gesture: HandGesture.UNKNOWN
-        // 保持最后的 distance 和 rotation，避免跳变
-      }));
+      setAppState(prev => {
+         if (prev.isRedirecting) return prev; // Redirecting, ignore
+         return {
+          ...prev,
+          gesture: HandGesture.UNKNOWN
+          // 保持最后的 distance 和 rotation，避免跳变
+         };
+      });
     }
   }, []);
 
