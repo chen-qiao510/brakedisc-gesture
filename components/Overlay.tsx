@@ -93,6 +93,40 @@ export const Overlay: React.FC<OverlayProps> = ({ appState, onVideoFrame }) => {
            </div>
         </div>
       </div>
+
+      {/* --- Redirecting Transition Overlay --- */}
+      {/* 这是一个全屏覆盖层，当 isRedirecting 为 true 时显示 */}
+      <div 
+        className={`absolute inset-0 bg-black/90 backdrop-blur-xl z-50 flex flex-col items-center justify-center transition-opacity duration-700 ${appState.isRedirecting ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      >
+        <div className="flex flex-col items-center space-y-8 max-w-2xl text-center">
+            {/* 动画 Spinner */}
+            <div className="relative w-24 h-24">
+               <div className="absolute inset-0 border-t-4 border-l-4 border-blue-500 rounded-full animate-spin"></div>
+               <div className="absolute inset-2 border-r-4 border-b-4 border-purple-500 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+               <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl animate-pulse">🚀</span>
+               </div>
+            </div>
+
+            {/* 文字提示 */}
+            <div>
+              <h2 className="text-4xl font-black text-white mb-2 tracking-wider" style={{ fontFamily: 'monospace' }}>
+                INITIALIZING LINK
+              </h2>
+              <p className="text-blue-300 font-mono text-lg animate-pulse">
+                Redirecting to Temperature Prediction Module...
+              </p>
+            </div>
+
+            {/* 进度条模拟 */}
+            <div className="w-full h-1 bg-gray-800 rounded overflow-hidden">
+                <div 
+                  className={`h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all ease-out duration-[2000ms] ${appState.isRedirecting ? 'w-full' : 'w-0'}`}
+                ></div>
+            </div>
+        </div>
+      </div>
     </div>
   );
 };
