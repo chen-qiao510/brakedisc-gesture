@@ -1,8 +1,10 @@
 
+
 import React, { useRef, useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { COLORS } from '../constants';
+import '../types';
 
 /**
  * 高仿真制动盘 3D 模型 (Ventilated Axle Disc)
