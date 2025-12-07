@@ -30,6 +30,15 @@ const App: React.FC = () => {
   // 防止组件卸载后继续执行
   const isMountedRef = useRef<boolean>(true);
 
+  // --- 新增：监听跳转逻辑 ---
+  useEffect(() => {
+    // 逻辑：如果当前是聚合状态（isExploded 为 false），且手势是 ONE（数字1）
+    if (!appState.isExploded && appState.gesture === HandGesture.ONE) {
+      // 执行跳转
+      window.location.href = "https://temp-predict-campare.vercel.app/";
+    }
+  }, [appState.gesture, appState.isExploded]);
+
   // 初始化 MediaPipe
   useEffect(() => {
     isMountedRef.current = true;

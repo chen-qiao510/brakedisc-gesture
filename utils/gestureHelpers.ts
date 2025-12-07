@@ -22,38 +22,42 @@ export const detectGesture = (landmarks: any[]): HandGesture => {
   
   const wrist = landmarks[0];
 
-  let foldedFingers = 0;
-  const tips = [8, 12, 16, 20]; // 除去大拇指
-  const pips = [6, 10, 14, 18]; // 近指关节
-  const mcps = [5, 9, 13, 17]; // 指根关节
+  // 辅助函数：判断单根手指是否弯曲
+  const isFingerFolded = (tipIdx: number, pipIdx: number, mcpIdx: number) => {
+    const distTip = getDistance(landmarks[tipIdx], wrist);
+    const distPip = getDistance(landmarks[pipIdx], wrist);
+    const distMcp = getDistance(landmarks[mcpIdx], wrist);
+    // 如果 指尖到手腕距离 < 近指关节到手腕距离 (严重弯曲)
+    // 或者 指尖到手腕距离 < 指根到手腕距离 * 1.3 (轻微弯曲)
+    return (distTip < distPip || distTip < distMcp * 1.3);
+  };
 
-  for (let i = 0; i < tips.length; i++) {
-    const tipIndex = tips[i];
-    const pipIndex = pips[i];
-    const mcpIndex = mcps[i];
-    
-    // 宽松的判断逻辑：
-    // 1. 如果指尖到手腕的距离 < 近指关节到手腕的距离 (严重弯曲)
-    // 2. 或者指尖到手腕的距离 < 指根到手腕的距离 * 1.2 (轻微弯曲)
-    const distTip = getDistance(landmarks[tipIndex], wrist);
-    const distPip = getDistance(landmarks[pipIndex], wrist);
-    const distMcp = getDistance(landmarks[mcpIndex], wrist);
+  // 分别判断四根手指的状态 (拇指通常不参与核心判断)
+  const isIndexFolded = isFingerFolded(8, 6, 5);   // 食指
+  const isMiddleFolded = isFingerFolded(12, 10, 9); // 中指
+  const isRingFolded = isFingerFolded(16, 14, 13);  // 无名指
+  const isPinkyFolded = isFingerFolded(20, 18, 17); // 小指
 
-    if (distTip < distPip || distTip < distMcp * 1.3) {
-      foldedFingers++;
-    }
+  // --- 1. 判断数字 "1" 手势 ---
+  // 逻辑：食指伸直 (没弯曲) + 中指弯曲 + 无名指弯曲 + 小指弯曲
+  if (!isIndexFolded && isMiddleFolded && isRingFolded && isPinkyFolded) {
+    return HandGesture.ONE;
   }
 
-  // console.log('Folded fingers:', foldedFingers);
+  // --- 2. 统计弯曲手指数量，用于判断拳头或手掌 ---
+  let foldedCount = 0;
+  if (isIndexFolded) foldedCount++;
+  if (isMiddleFolded) foldedCount++;
+  if (isRingFolded) foldedCount++;
+  if (isPinkyFolded) foldedCount++;
 
-  // 宽松的拳头判断：只要有 3 个或以上手指弯曲就算拳头 (允许食指或小指没握紧)
-  if (foldedFingers >= 3) {
+  // 宽松的拳头判断：只要有 3 个或以上手指弯曲就算拳头
+  if (foldedCount >= 3) {
     return HandGesture.FIST;
   }
 
-  // 宽松的张开手掌判断：允许 1 个手指误判为弯曲 (通常是拇指或视角问题)
-  // 只要大部分手指是直的，就算张开
-  if (foldedFingers <= 1) {
+  // 宽松的张开手掌判断：只要大部分手指是直的 (弯曲 <= 1)，就算张开
+  if (foldedCount <= 1) {
     return HandGesture.OPEN_PALM;
   }
 

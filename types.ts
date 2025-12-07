@@ -4,6 +4,7 @@ export enum HandGesture {
   UNKNOWN = 'UNKNOWN',
   OPEN_PALM = 'OPEN_PALM',
   FIST = 'FIST',
+  ONE = 'ONE', // 新增：数字1手势
 }
 
 // 粒子类型
